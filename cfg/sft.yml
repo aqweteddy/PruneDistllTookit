@@ -7,6 +7,7 @@ use_liger: true
 learning_rate: 1e-5
 lr_scheduler_type: cosine
 per_device_train_batch_size: 1
-
-
+max_length: 4096
+gradient_checkpointing: true
+num_train_epochs: 3
 report_to: wandb
