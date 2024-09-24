@@ -36,7 +36,7 @@ if __name__ == "__main__":
     ################
     # Dataset
     ################
-    dataset = load_dataset(eval(args.dataset))
+    dataset = load_dataset(eval(args.dataset_name))
     dataset = dataset.train_test_split(test_size=1000)
 
     ################
