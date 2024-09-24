@@ -1,1 +1,5 @@
 trl
+deepspeed
+liger_kernel
+bitsandbytes
+sentencepiece
