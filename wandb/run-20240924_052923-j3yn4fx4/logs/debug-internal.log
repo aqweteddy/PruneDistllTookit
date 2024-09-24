@@ -1,0 +1,11 @@
+{"time":"2024-09-24T05:29:23.394070027Z","level":"INFO","msg":"using version","core version":"0.18.1"}
+{"time":"2024-09-24T05:29:23.394089696Z","level":"INFO","msg":"created symlink","path":"/root/prune_distil_tookit/wandb/run-20240924_052923-j3yn4fx4/logs/debug-core.log"}
+{"time":"2024-09-24T05:29:23.3941318Z","level":"INFO","msg":"using version","core version":"0.18.1"}
+{"time":"2024-09-24T05:29:23.39413773Z","level":"INFO","msg":"created symlink","path":"/root/prune_distil_tookit/wandb/run-20240924_052923-j3yn4fx4/logs/debug-core.log"}
+{"time":"2024-09-24T05:29:23.395689088Z","level":"INFO","msg":"created new stream","id":"j3yn4fx4"}
+{"time":"2024-09-24T05:29:23.395712561Z","level":"INFO","msg":"stream: started","id":"j3yn4fx4"}
+{"time":"2024-09-24T05:29:23.395735389Z","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"j3yn4fx4"}}
+{"time":"2024-09-24T05:29:23.39571682Z","level":"INFO","msg":"handler: started","stream_id":{"value":"j3yn4fx4"}}
+{"time":"2024-09-24T05:29:23.395750029Z","level":"INFO","msg":"sender: started","stream_id":{"value":"j3yn4fx4"}}
+{"time":"2024-09-24T05:29:23.796929345Z","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2024-09-24T05:29:23.799019048Z","level":"INFO","msg":"Starting system monitor"}

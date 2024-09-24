@@ -9,11 +9,14 @@ accelerate launch --config_file deepspeed_cfg/zero2.yml --num_processes 4 train_
 --learning_rate 1e-5 \
 --weight_decay 0.01 \
 --optim paged_adamw_8bit \
+--gradient_accumulation_steps 4 \
 --lr_scheduler_type cosine \
 --warmup_steps 100 \
+--max_seq_length 4096 \
 --per_device_train_batch_size 1 \
 --num_train_epochs 3 \
 --gradient_checkpointing \
 --report_to wandb \
+--bf16 \
 --save_only_model \
 --save_safetensors 
