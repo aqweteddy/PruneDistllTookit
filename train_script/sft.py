@@ -29,14 +29,16 @@ if __name__ == "__main__":
     )
     training_args.model_init_kwargs = model_kwargs
     tokenizer = AutoTokenizer.from_pretrained(
-        model_config.model_name_or_path, trust_remote_code=model_config.trust_remote_code, use_fast=True
+        model_config.model_name_or_path, 
+        trust_remote_code=model_config.trust_remote_code, 
+        use_fast=True
     )
     tokenizer.pad_token = tokenizer.eos_token
 
     ################
     # Dataset
     ################
-    dataset = load_dataset(eval(args.dataset_name))
+    dataset = load_dataset(**eval(args.dataset_name))['train']
     dataset = dataset.train_test_split(test_size=1000)
 
     ################
@@ -44,7 +46,6 @@ if __name__ == "__main__":
     ################
     model = AutoLigerKernelForCausalLM.from_pretrained(
         model_config.model_name_or_path,
-        trust_remote_code=model_config.trust_remote_code,
         **model_kwargs,
     )
     
