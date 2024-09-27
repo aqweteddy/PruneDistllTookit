@@ -63,7 +63,7 @@ def get_cosine_similarity_of_layers(
     return cosine_similarity.mean()
 
 
-def loco(
+def laco(
     model: LlamaForCausalLM,
     c: int, # Number of layers combined in each merge
     I: int, # Minimum interval between two adjacent merged layers
@@ -131,7 +131,7 @@ def main(
     inputs = tokenizer(dataset['_mes_str'], return_tensors="pt", padding="longest", truncation=True)
     samples = DataLoader(inputs, batch_size=batch_size, shuffle=False, drop_last=False)
     
-    loco(
+    laco(
         model=model,
         C=C,
         I=I,
