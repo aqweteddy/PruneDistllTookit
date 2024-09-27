@@ -58,6 +58,7 @@ def main(model_path: str, dataset: str, dataset_column: str, batch_size: int, ma
     
     model = AutoModelForCausalLM.from_pretrained(model_path,  
                                                  device_map="auto", 
+                                                 attn_implementation="flash_attention_2",
                                                  output_hidden_states=True)
     
     tokenizer = AutoTokenizer.from_pretrained(model_path)
