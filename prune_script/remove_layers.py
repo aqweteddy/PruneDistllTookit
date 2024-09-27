@@ -34,5 +34,6 @@ def main(
     with open(f"{output_path}/pruning.json", "w") as f:
         json.dump({"removed_layers": remove_ids}, f, ensure_ascii=False, indent=4)
 
+
 if __name__ == '__main__':
     Fire(main)

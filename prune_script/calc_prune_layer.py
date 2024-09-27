@@ -107,25 +107,24 @@ def main(model_path: str, dataset: str, dataset_column: str, batch_size: int, ma
     min_distance = float('inf')  # Initialize with infinity
     min_distance_layer = 0  # Initialize with an impossible value
 
-    with open('layer_distances.csv', 'w', newline='') as csvfile:
-        fieldnames = ['block_start', 'block_end', 'average_distance']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for i, avg_dist in enumerate(average_distances):
-            # Write each row to the CSV
-            writer.writerow({
-                'block_start': i + 1,  # layer indices are 1-based in the paper
-                'block_end': i + 1 + layers_to_skip,
-                'average_distance': avg_dist
-            })
-            
-            if avg_dist < min_distance:
-                min_distance = avg_dist
-                min_distance_layer = i + 1  
+    layers = []
+    for i, avg_dist in enumerate(average_distances):
+        layers.append({
+            'block_start': i,
+            'block_end': i + layers_to_skip,
+            'distance': avg_dist
+        })
     
-    # Log the layer with the minimum average distance
-    logging.info(f"Layer {min_distance_layer} to {min_distance_layer + layers_to_skip} has the minimum average distance of {min_distance}. Consider examining this layer more closely for potential optimization or removal.")
-    logging.info("Layer distances written to layer_distances.csv")
+    layers = sorted(layers, key=lambda x: x['distance'])
+    for layer in layers:
+        logging.info(f"Block {layer['block_start']} to {layer['block_end']}: {layer['distance']}")
+    
+    # write to csv
+    with open(f"{model_path}/{dataset}_layer_distances.csv", "w") as f:
+        writer = csv.DictWriter(f, fieldnames=['block_start', 'block_end', 'distance'])
+        writer.writeheader()
+        for layer in layers:
+            writer.writerow(layer)
 
 
 if __name__ == "__main__":
