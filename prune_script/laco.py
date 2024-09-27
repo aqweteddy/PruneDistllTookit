@@ -78,23 +78,28 @@ def laco(
     while l >= layer_range[0]:
         k = min(c-1, len(M) - l)
         
+        logging.info(f"Merge layers from {l} to {l+k}")
         new_layer = layer_merge(M[l], M[l+1:k])
         tmp_M = M[:l] + new_layer + M[l+k:]
         model.model.layers = nn.ModuleList(tmp_M)
         
         # calculate the similarity
         tmp_hidden = inference_last_hidden(model, samples)
+        sim = get_cosine_similarity_of_layers(original_hidden, tmp_hidden)
         
-        if get_cosine_similarity_of_layers(original_hidden, tmp_hidden) >= T:
+        if sim >= T:
+            logging.info(f"Similarity: {sim}, Merge layers from {l} to {l+k}")
             M = tmp_M
             l -= I
             if l > len(M) - c:
                 l = len(M) - c
         else:
+            logging.info(f"Similarity: {sim}, Skip merging layers from {l} to {l+k}")
             l -= 1
     
     model.model.layers = nn.ModuleList(M)
     return model
+
 
 def apply_chat_template(dct: dict, col: str, tokenizer: AutoTokenizer):
     res = tokenizer.apply_chat_template(dct[col], tokenize=False)
