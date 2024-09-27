@@ -122,7 +122,7 @@ def main(model_path: str, dataset: str, dataset_column: str, batch_size: int, ma
             if avg_dist < min_distance:
                 min_distance = avg_dist
                 min_distance_layer = i + 1  
-
+    
     # Log the layer with the minimum average distance
     logging.info(f"Layer {min_distance_layer} to {min_distance_layer + layers_to_skip} has the minimum average distance of {min_distance}. Consider examining this layer more closely for potential optimization or removal.")
     logging.info("Layer distances written to layer_distances.csv")
