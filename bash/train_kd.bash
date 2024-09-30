@@ -4,7 +4,7 @@ accelerate launch --config_file deepspeed_cfg/zero2.yml --num_processes 4 train_
 --teacher_model_name_or_path /volume/models/Qwen/Qwen2.5-1.5B-Instruct \
 --torch_dtype bfloat16 \
 --output_dir /volume/models/rag_ckpt/test \
---dataset_name "{'path':'aqweteddy/mrc','revision':'v0_cite'}" \
+--dataset_name "{'path':'json','data_files':'/volume/finance-data/processed-data/instrction_pretraining/derivatives/ft.jsonl'}" \
 --dataset_num_proc 12 \
 --use_liger \
 --learning_rate 1e-5 \

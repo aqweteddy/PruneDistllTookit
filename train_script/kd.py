@@ -39,7 +39,7 @@ if __name__ == "__main__":
     # Dataset
     ################
     dataset = load_dataset(**eval(args.dataset_name))['train']
-    dataset = dataset.train_test_split(test_size=1000)
+    dataset = dataset.train_test_split(test_size=0.01)
 
     ################
     # Training
@@ -61,6 +61,7 @@ if __name__ == "__main__":
         tokenizer=tokenizer,
         train_dataset=dataset['train'],
         eval_dataset=dataset['test'],
+        loss_modules=['mlp_output', 'logits', 'embed'],
         teacher_student_layer_map={
             2: 2,
             5: 5,

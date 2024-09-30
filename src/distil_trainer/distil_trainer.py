@@ -2,7 +2,7 @@ from typing import Union, Optional, Dict, Any
 from transformers import PreTrainedModel
 import torch, random
 from torch import nn
-from trl import GKDConfig, GKDTrainer
+from trl import GKDConfig, GKDTrainer, SFTTrainer
 from trl.trainer.utils import empty_cache
 from trl.models.utils import unwrap_model_for_generation
 
@@ -21,7 +21,7 @@ class CustomKDTrainer(GKDTrainer):
         self.teacher_student_layer_map = teacher_student_layer_map
     
     def training_step(self, model: nn.Module, inputs: Dict[str, Union[torch.Tensor, Any]]) -> torch.Tensor:
-        loss = super().training_step(model, inputs)
+        loss = SFTTrainer.training_step(self, model, inputs)
         return loss
     
     @staticmethod
@@ -38,11 +38,11 @@ class CustomKDTrainer(GKDTrainer):
             attention_mask=inputs["attention_mask"],
             output_hidden_states=True,
         )
-
+        
         # compute teacher output in eval mode
         self.teacher_model.eval()
         with torch.no_grad():
-            input_ids = inputs["input_ids"] # [batch_size, seq_len]
+            input_ids = inputs["input_ids"] # [batch_size, seq_len]3
             # labels = inputs["labels"] # [batch_size, seq_len]
             # input_ids_labels = torch.cat([input_ids, labels], dim=-1)
             outputs_teacher = self.teacher_model(
