@@ -12,7 +12,7 @@ class CustomKDTrainer(GKDTrainer):
         teacher_model: Union[PreTrainedModel, nn.Module, str],
         args: Optional[GKDConfig] = None,
         loss_modules: list[str] = ['mlp_output'], # ['embed', 'logits', 'mlp_output']
-        teacher_student_layer_map: Optional[dict[int, int]] = None,
+        teacher_student_layer_map: Optional[dict[int, int]] = {},
         *sft_args,
         **kwargs,
     ):

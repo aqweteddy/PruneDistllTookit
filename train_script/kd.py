@@ -11,7 +11,7 @@ from trl import (
     SFTConfig,
 )
 
-from distill_trainer.distill_trainer import CustomKDTrainer
+from src.distil_trainer import CustomKDTrainer
 
 
 if __name__ == "__main__":
@@ -61,6 +61,11 @@ if __name__ == "__main__":
         tokenizer=tokenizer,
         train_dataset=dataset['train'],
         eval_dataset=dataset['test'],
+        teacher_student_layer_map={
+            2: 2,
+            5: 5,
+            10: 10,
+        }
     )
     
     trainer.train()

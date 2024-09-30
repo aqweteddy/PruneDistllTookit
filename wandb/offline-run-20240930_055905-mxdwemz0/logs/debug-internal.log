@@ -1,0 +1,11 @@
+{"time":"2024-09-30T05:59:05.925550702Z","level":"INFO","msg":"using version","core version":"0.18.1"}
+{"time":"2024-09-30T05:59:05.925594258Z","level":"INFO","msg":"created symlink","path":"/root/PruneDistllTookit/wandb/offline-run-20240930_055905-mxdwemz0/logs/debug-core.log"}
+{"time":"2024-09-30T05:59:05.925676734Z","level":"INFO","msg":"using version","core version":"0.18.1"}
+{"time":"2024-09-30T05:59:05.925685729Z","level":"INFO","msg":"created symlink","path":"/root/PruneDistllTookit/wandb/offline-run-20240930_055905-mxdwemz0/logs/debug-core.log"}
+{"time":"2024-09-30T05:59:05.928256529Z","level":"INFO","msg":"created new stream","id":"mxdwemz0"}
+{"time":"2024-09-30T05:59:05.928280641Z","level":"INFO","msg":"stream: started","id":"mxdwemz0"}
+{"time":"2024-09-30T05:59:05.928294965Z","level":"INFO","msg":"sender: started","stream_id":{"value":"mxdwemz0"}}
+{"time":"2024-09-30T05:59:05.928291245Z","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"mxdwemz0"}}
+{"time":"2024-09-30T05:59:05.928311127Z","level":"INFO","msg":"handler: started","stream_id":{"value":"mxdwemz0"}}
+{"time":"2024-09-30T05:59:05.946901802Z","level":"INFO","msg":"wandb-core","!BADKEY":null}
+{"time":"2024-09-30T05:59:05.99543639Z","level":"INFO","msg":"Starting system monitor"}
