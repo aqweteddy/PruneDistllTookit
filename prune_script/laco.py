@@ -111,13 +111,14 @@ def count_parameters(model: LlamaForCausalLM):
 
 
 def main(
-    model_path: str,
-    dataset: str,
+    model_path: str = '/volume/models/Qwen/Qwen2.5-1.5B-Instruct/',
+    dataset: str = "{'path':'aqweteddy/mrc','revision':'v0_cite'}",
     dataset_size: int=100,
-    output_path: str = "ckpt/pruned_model",
+    output_path: str = "/volume/models/test/",
     batch_size: int = 2,       
     C: int = 2, # Number of layers combined in each merge
     I: int = 2, # Minimum interval between two adjacent merged layers
+    T: float = 0.9, # Threshold for representation similarity
 ):
     model: LlamaForCausalLM = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype='auto')
     logging.info(f"Model has {count_parameters(model)} parameters")
@@ -134,16 +135,19 @@ def main(
                           num_proc=8)
     
     inputs = tokenizer(dataset['_mes_str'], return_tensors="pt", padding="longest", truncation=True)
-    samples = DataLoader(inputs, batch_size=batch_size, shuffle=False, drop_last=False)
+    samples = DataLoader(inputs, 
+                         batch_size=batch_size, 
+                         shuffle=False, 
+                         drop_last=False)
     
-    laco(
-        model=model,
-        C=C,
-        I=I,
-        original_hidden=inference_last_hidden(model, samples),
-        samples=samples,
-        T=0.9,
-        layer_range=(0, len(model.model.layers)),
+    model = laco(
+            model=model,
+            C=C,
+            I=I,
+            original_hidden=inference_last_hidden(model, samples),
+            samples=samples,
+            T=T,
+            layer_range=(1, len(model.model.layers) - 1),
     )
     config.num_hidden_layers = len(model.model.layers)
     tokenizer.padding_side = 'right'
