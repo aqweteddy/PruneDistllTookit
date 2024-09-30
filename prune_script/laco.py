@@ -3,6 +3,7 @@ from transformers.models.llama.modeling_llama import LlamaDecoderLayer
 from torch import nn
 import torch
 from tqdm import tqdm
+import copy
 import datasets
 
 import json, logging
@@ -21,20 +22,20 @@ def layer_merge(
     Merge layers by adding them together.
     
     """
-    def __substrct(a: LlamaDecoderLayer, b: LlamaDecoderLayer):
+    def __substrct(a: dict, b: dict):
         new_params = {}
-        for k, v in a.state_dict().items():
-            new_params[k] = v - b.state_dict()[k]
+        for k, v in a.items():
+            new_params[k] = v - b[k]
         return new_params
-    def __add(a: LlamaDecoderLayer, b: LlamaDecoderLayer):
+    def __add(a: dict, b: dict):
         new_params = {}
-        for k, v in a.state_dict().items():
-            new_params[k] = v + b.state_dict()[k]
+        for k, v in a.items():
+            new_params[k] = v + b[k]
         return new_params
 
     result = base_l.state_dict()
     for l in l_s:
-        delta = __substrct(l, base_l)
+        delta = __substrct(l.state_dict(), base_l.state_dict())
         result = __add(result, delta)
     
     base_l.load_state_dict(result)
@@ -47,10 +48,12 @@ def inference_last_hidden(
 ):
     model.eval()
     result = []
-    with torch.no_grad():
-        for batch in tqdm(samples):
-            last_hidden  = model(**batch).last_hidden_state[:, -1, :] # [batch_size, hidden_size]
-            result.append(last_hidden.detach().cpu())
+    for batch in tqdm(samples, leave=False):
+        # to cuda
+        for k, v in batch.items():
+            batch[k] = v.to('cuda')
+        last_hidden  = model(**batch).hidden_states[-1][:, -1, :] # [batch_size, hidden_size]
+        result.append(last_hidden.detach().cpu())
     return torch.cat(result, dim=0)
 
 def get_cosine_similarity_of_layers(
@@ -62,10 +65,17 @@ def get_cosine_similarity_of_layers(
     cosine_similarity = (hidden1 * hidden2).sum(-1)
     return cosine_similarity.mean()
 
+def fix_layer_index(
+    model: LlamaForCausalLM,
+):
+    for i, layer in enumerate(model.model.layers):
+        layer.self_attn.layer_idx = i
+        
+    return model
 
 def laco(
     model: LlamaForCausalLM,
-    c: int, # Number of layers combined in each merge
+    C: int, # Number of layers combined in each merge
     I: int, # Minimum interval between two adjacent merged layers
     original_hidden: torch.Tensor, # Hidden states of the original model
     samples: DataLoader,
@@ -73,17 +83,20 @@ def laco(
     layer_range: tuple[int, int], # Range of layers to be merged
 ):
     M: nn.ModuleList[LlamaDecoderLayer] = model.model.layers
-    
-    l = len(layer_range[1]) - c # from top
+    print('original_M', len(M))
+    l = layer_range[1] - C # from top
     while l >= layer_range[0]:
-        k = min(c-1, len(M) - l)
-        
+        k = min(C - 1, len(M) - l)
+        print(f'{k=}, {l=}, {len(M)=}')
         logging.info(f"Merge layers from {l} to {l+k}")
-        new_layer = layer_merge(M[l], M[l+1:k])
-        tmp_M = M[:l] + new_layer + M[l+k:]
+        new_layer = layer_merge(M[l], M[l+1:l+k]) # merge layers from l to k
+        tmp_M = copy.deepcopy(M[:l]) + [new_layer] + copy.deepcopy(M[l+k:])
+        print('tmp_M', len(tmp_M))
+        
         model.model.layers = nn.ModuleList(tmp_M)
         
         # calculate the similarity
+        model = fix_layer_index(model)
         tmp_hidden = inference_last_hidden(model, samples)
         sim = get_cosine_similarity_of_layers(original_hidden, tmp_hidden)
         
@@ -91,8 +104,8 @@ def laco(
             logging.info(f"Similarity: {sim}, Merge layers from {l} to {l+k}")
             M = tmp_M
             l -= I
-            if l > len(M) - c:
-                l = len(M) - c
+            if l > len(M) - C:
+                l = len(M) - C
         else:
             logging.info(f"Similarity: {sim}, Skip merging layers from {l} to {l+k}")
             l -= 1
@@ -107,7 +120,7 @@ def apply_chat_template(dct: dict, col: str, tokenizer: AutoTokenizer):
     return {'_mes_str': res}
 
 def count_parameters(model: LlamaForCausalLM):
-    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+    return sum(p.numel() for p in model.parameters())
 
 
 def main(
@@ -116,11 +129,12 @@ def main(
     dataset_size: int=100,
     output_path: str = "/volume/models/test/",
     batch_size: int = 2,       
-    C: int = 2, # Number of layers combined in each merge
+    C: int = 4, # Number of layers combined in each merge
     I: int = 2, # Minimum interval between two adjacent merged layers
-    T: float = 0.9, # Threshold for representation similarity
+    T: float = 0.6, # Threshold for representation similarity
 ):
-    model: LlamaForCausalLM = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype='auto')
+    model: LlamaForCausalLM = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype='auto', output_hidden_states=True)
+    model.to('cuda')
     logging.info(f"Model has {count_parameters(model)} parameters")
     
     config: LlamaConfig = model.config
@@ -135,6 +149,7 @@ def main(
                           num_proc=8)
     
     inputs = tokenizer(dataset['_mes_str'], return_tensors="pt", padding="longest", truncation=True)
+    inputs = [{'input_ids': inputs['input_ids'][i], 'attention_mask': inputs['attention_mask'][i]} for i in range(len(inputs['input_ids']))]
     samples = DataLoader(inputs, 
                          batch_size=batch_size, 
                          shuffle=False, 
