@@ -1,0 +1,26 @@
+#!/bin/bash
+accelerate launch --config_file deepspeed_cfg/zero2.yml --num_processes 4 train_script/kd.py \
+--model_name_or_path /volume/models/Qwen/Qwen2.5-1.5B-Instruct \
+--teacher_model_name_or_path /volume/models/Qwen/Qwen2.5-1.5B-Instruct \
+--torch_dtype bfloat16 \
+--output_dir /volume/models/rag_ckpt/test \
+--dataset_name "{'path':'aqweteddy/mrc','revision':'v0-cite'}" \
+--dataset_num_proc 8 \
+--use_liger \
+--learning_rate 1e-5 \
+--weight_decay 0.01 \
+--optim paged_adamw_8bit \
+--gradient_accumulation_steps 4 \
+--lr_scheduler_type cosine \
+--warmup_steps 100 \
+--max_seq_length 4096 \
+--per_device_train_batch_size 1 \
+--max_new_tokens 2048 \
+--num_train_epochs 3 \
+--gradient_checkpointing \
+--lmbda 0.75 \
+--beta 0.1 \
+--report_to wandb \
+--bf16 \
+--save_only_model \
+--save_safetensors 
