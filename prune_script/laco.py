@@ -52,8 +52,13 @@ def inference_last_hidden(
         # to cuda
         for k, v in batch.items():
             batch[k] = v.to('cuda')
-        last_hidden  = model(**batch).hidden_states[-1][:, -1, :] # [batch_size, hidden_size]
-        result.append(last_hidden.detach().cpu())
+        input_ids, attention_mask = batch['input_ids'], batch['attention_mask']
+        last_hidden  = model(**batch).hidden_states[-1] # [batch_size, hidden_size]
+        for batch in range(last_hidden.size(0)):
+            last_non_pad_index = attention_mask[batch].nonzero(as_tuple=True)[0].max()
+            
+            result.append(last_hidden[batch, last_non_pad_index, :].unsqueeze(0))
+    
     return torch.cat(result, dim=0)
 
 def get_cosine_similarity_of_layers(
@@ -63,6 +68,7 @@ def get_cosine_similarity_of_layers(
     hidden1 = hidden1 / torch.norm(hidden1, dim=-1, keepdim=True)
     hidden2 = hidden2 / torch.norm(hidden2, dim=-1, keepdim=True)
     cosine_similarity = (hidden1 * hidden2).sum(-1)
+    print(cosine_similarity)
     return cosine_similarity.mean()
 
 def fix_layer_index(
@@ -104,6 +110,7 @@ def laco(
             logging.info(f"Similarity: {sim}, Merge layers from {l} to {l+k}")
             M = tmp_M
             l -= I
+            original_hidden = tmp_hidden
             if l > len(M) - C:
                 l = len(M) - C
         else:
@@ -125,7 +132,7 @@ def count_parameters(model: LlamaForCausalLM):
 
 def main(
     model_path: str = '/volume/models/Qwen/Qwen2.5-1.5B-Instruct/',
-    dataset: str = "{'path':'aqweteddy/mrc','revision':'v0_cite'}",
+    dataset: dict = "{'path':'aqweteddy/mrc','revision':'v0_cite'}",
     dataset_size: int=100,
     output_path: str = "/volume/models/test/",
     batch_size: int = 2,       
@@ -139,11 +146,11 @@ def main(
     
     config: LlamaConfig = model.config
     tokenizer = AutoTokenizer.from_pretrained(model_path)
-    dataset = datasets.load_dataset(**eval(dataset))['train'] 
+    dataset = datasets.load_dataset(**dataset)['train'] 
     if dataset_size:
         dataset = dataset.shuffle().select(range(dataset_size))
     
-    tokenizer.padding_side = 'left'
+    # tokenizer.padding_side = 'left'
     dataset = dataset.map(apply_chat_template, fn_kwargs={'tokenizer': tokenizer, 
                                                           'col': 'messages'},
                           num_proc=8)
@@ -156,16 +163,15 @@ def main(
                          drop_last=False)
     
     model = laco(
-            model=model,
-            C=C,
-            I=I,
-            original_hidden=inference_last_hidden(model, samples),
-            samples=samples,
-            T=T,
-            layer_range=(1, len(model.model.layers) - 1),
+        model=model,
+        C=C,
+        I=I,
+        original_hidden=inference_last_hidden(model, samples),
+        samples=samples,
+        T=T,
+        layer_range=(1, len(model.model.layers) - 1),
     )
     config.num_hidden_layers = len(model.model.layers)
-    tokenizer.padding_side = 'right'
     logging.info(f"Model has {count_parameters(model)} parameters after pruning.")
     model.save_pretrained(output_path, max_shard_size='8GB')
     tokenizer.save_pretrained(output_path)
